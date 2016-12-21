@@ -4,8 +4,6 @@
 #include "Globals.h"
 #include "Primitive.h"
 
-#define MAX_SNAKE 2
-
 struct PhysBody3D;
 struct PhysMotor3D;
 
@@ -22,7 +20,12 @@ public:
 	void OnCollision(PhysBody3D* body1, PhysBody3D* body2);
 	void CreateCircuit();
 
+	int num_checkpoints;
+
 public:
+	p2List<PhysBody3D*> doors;
+	p2List<PhysBody3D*> ramps;
+	p2List<PhysBody3D*> balls;
 	
 
 	PhysBody3D* pb_chassis;
@@ -37,10 +40,16 @@ public:
 	PhysMotor3D* left_wheel;
 	PhysMotor3D* right_wheel;
 	
-	
-	
-	p2List<PhysBody3D*> doors;
+	PhysBody3D* meta;
+	PhysBody3D* checkpoint1;
+	PhysBody3D* checkpoint2;
 
-	
-	bool render;
+	PhysBody3D* speedboost1;
+	PhysBody3D* speedboost2;
+
+	Timer timer;
+	Timer onetlap;
+	Timer seclap;
+	Timer trilap;
+	int lastlap = 0;
 };

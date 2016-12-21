@@ -5,6 +5,12 @@
 
 class btRigidBody;
 class Module;
+enum Type
+{
+	tvehicle,
+	tcheckpoint,
+	tspeedbost,
+};
 
 // =================================================
 struct PhysBody3D
@@ -20,10 +26,13 @@ public:
 	void SetPos(float x, float y, float z);
 
 private:
-	btRigidBody* body = nullptr;
+	
+	bool IsSensor;
 
 public:
+	btRigidBody* body = nullptr;
 	p2List<Module*> collision_listeners;
+	Type type;
 };
 
 #endif // __PhysBody3D_H__

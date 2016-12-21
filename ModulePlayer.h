@@ -5,7 +5,7 @@
 
 struct PhysVehicle3D;
 
-#define MAX_ACCELERATION 1000.0f
+#define MAX_ACCELERATION 400.0f
 #define TURN_DEGREES 15.0f * DEGTORAD
 #define BRAKE_POWER 1000.0f
 
@@ -18,11 +18,21 @@ public:
 	bool Start();
 	update_status Update(float dt);
 	bool CleanUp();
+	void ResetGame();
 
 public:
-	bool camaradebug;
+	bool camaradebug=false;
 	PhysVehicle3D* vehicle;
 	float turn;
 	float acceleration;
 	float brake;
+	
+	
+
+	int best_lap;
+	
+
+	int lap_num;
+	int total_lap;
+	bool win;
 };

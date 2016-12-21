@@ -11,6 +11,10 @@
 ModulePlayer::ModulePlayer(Application* app, bool start_enabled) : Module(app, start_enabled), vehicle(NULL)
 {
 	turn = acceleration = brake = 0.0f;
+	best_lap = 0;
+	win = false;
+	lap_num = 0;
+	total_lap = 3;
 }
 
 ModulePlayer::~ModulePlayer()
@@ -21,18 +25,35 @@ bool ModulePlayer::Start()
 {
 	LOG("Loading player");
 
+
 	VehicleInfo car;
 
-	camaradebug = false;
 	// Car properties ----------------------------------------
-	car.chassis_size.Set(2, 1, 4);
+	car.chassis_size.Set(3, 1, 5);
 	car.chassis_offset.Set(0, 1.5, 0);
+	car.chassis2_size.Set(3, 0.8f, 2.3);
+	car.chassis2_offset.Set(0, 2.2, -0.6);
+
+	//Aleró
+	car.stick_size.Set(0.3, 2, 0.3);
+	car.stick_offset.Set(0.7,2,-2.3);
+	car.stick2_size.Set(0.3, 2, 0.3);
+	car.stick2_offset.Set(-0.7, 2, -2.3);
+	car.backWinger_size.Set(3, 0.3, 1);
+	car.backWinger_offset.Set(0, 3, -2.3);
+
+	//lights
+	car.frontLight_size.Set(0.3,0.3,0.3);
+	car.frontLight_offset.Set(0.8,2.2,2.4);
+	car.frontLight2_size.Set(0.3, 0.3, 0.3);
+	car.frontLight2_offset.Set(-0.8, 2.2, 2.4);
+
 	car.mass = 500.0f;
 	car.suspensionStiffness = 5.88f;
 	car.suspensionCompression = 0.83f;
 	car.suspensionDamping = 0.88f;
-	car.maxSuspensionTravelCm = 1000.0f;
-	car.frictionSlip = 50.5;
+	car.maxSuspensionTravelCm = 400.0f;
+	car.frictionSlip = 10.5;
 	car.maxSuspensionForce = 6000.0f;
 
 	// Wheel properties ---------------------------------------
@@ -100,7 +121,8 @@ bool ModulePlayer::Start()
 	car.wheels[3].brake = true;
 	car.wheels[3].steering = false;
 
-	vehicle = App->physics->AddVehicle(car);
+	vehicle = App->physics->AddVehicle(car,App->scene_intro);
+	vehicle->type = tvehicle;
 	vehicle->SetPos(-50, 7, 0);
 	
 	return true;
@@ -114,14 +136,53 @@ bool ModulePlayer::CleanUp()
 	return true;
 }
 
+void ModulePlayer::ResetGame()
+{
+	win = false;
+	best_lap = 0;
+	App->scene_intro->lastlap = 0;
+	lap_num = 0;
+	App->scene_intro->num_checkpoints = 0;
+
+
+	vehicle->body->setLinearVelocity(btVector3(0, 0, 0));
+	vehicle->body->setAngularVelocity(btVector3(0, 0, 0));
+
+	int x = (int)vehicle->vehicle->getRigidBody()->getCenterOfMassPosition().getX();
+	int z = (int)vehicle->vehicle->getRigidBody()->getCenterOfMassPosition().getZ();
+	vehicle->SetTransform(IdentityMatrix.M);
+	vehicle->SetPos(-50, 5, 0);
+
+	
+	
+	App->scene_intro->timer.Stop();
+	App->scene_intro->onetlap.Stop();
+	App->scene_intro->seclap.Stop();
+	App->scene_intro->trilap.Stop();
+
+	App->scene_intro->timer.Start();
+	App->scene_intro->onetlap.Start();
+
+	vehicle->ApplyEngineForce(acceleration);
+	vehicle->Turn(turn);
+	vehicle->Brake(brake);
+	
+
+}
+
+
 // Update: draw background
 update_status ModulePlayer::Update(float dt)
 {
 	turn = acceleration = brake = 0.0f;
-	
+	if (App->input->GetKey(SDL_SCANCODE_J) == KEY_DOWN)
+	{
+		ResetGame();
+	}
 	if (App->input->GetKey(SDL_SCANCODE_UP) == KEY_REPEAT)
 	{
 		acceleration = MAX_ACCELERATION;
+//		App->audio->PlayFx(App->audio->LoadFx("Game/Music/broombroom.wav"));
 	}
 
 	if (App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_REPEAT)
@@ -150,9 +211,44 @@ update_status ModulePlayer::Update(float dt)
 	{
 		acceleration = -MAX_ACCELERATION;
 	}
-	
+	if (App->input->GetKey(SDL_SCANCODE_K) == KEY_DOWN)
+	{
+		if (App->scene_intro->num_checkpoints == 0)
+		{
+			vehicle->body->setLinearVelocity(btVector3(0, 0, 0));
+			vehicle->body->setAngularVelocity(btVector3(0, 0, 0));
+
+			int x = (int)vehicle->vehicle->getRigidBody()->getCenterOfMassPosition().getX();
+			int z = (int)vehicle->vehicle->getRigidBody()->getCenterOfMassPosition().getZ();
+			vehicle->SetTransform(IdentityMatrix.M);
+			vehicle->SetPos(-50, 5, 0);
+		}
+		if (App->scene_intro->num_checkpoints == 1)
+		{
+			vehicle->body->setLinearVelocity(btVector3(0, 0, 0));
+			vehicle->body->setAngularVelocity(btVector3(0, 0, 0));
+
+			int x = (int)vehicle->vehicle->getRigidBody()->getCenterOfMassPosition().getX();
+			int z = (int)vehicle->vehicle->getRigidBody()->getCenterOfMassPosition().getZ();
+			vehicle->SetTransform(IdentityMatrix.M); 
+			vehicle->SetPos(92, 5, 135);
+			
+		}
+		if (App->scene_intro->num_checkpoints == 2)
+		{
+			vehicle->body->setLinearVelocity(btVector3(0, 0, 0));
+			vehicle->body->setAngularVelocity(btVector3(0, 0, 0));
+
+			int x = (int)vehicle->vehicle->getRigidBody()->getCenterOfMassPosition().getX();
+			int z = (int)vehicle->vehicle->getRigidBody()->getCenterOfMassPosition().getZ();
+			vehicle->SetTransform(IdentityMatrix.M);
+			vehicle->SetPos(-26, 5, -131);
+			
+		}
+	}
+
 	if (App->input->GetKey(SDL_SCANCODE_F2) == KEY_DOWN)
-	{	
+	{
 		camaradebug = !camaradebug;
 	}
 	if (!camaradebug) {
@@ -162,16 +258,32 @@ update_status ModulePlayer::Update(float dt)
 
 		App->camera->LookAt(vec3(CAMERA_X, 0, CAMERA_Z));
 	}
+
+	
+
 	vehicle->ApplyEngineForce(acceleration);
 	vehicle->Turn(turn);
 	vehicle->Brake(brake);
 
+	
 	vehicle->Render();
 
-	char title[80];
-	sprintf_s(title, "%.1f Km/h", vehicle->GetKmh());
+	char title[800];
+	sprintf_s(title, "%.1f Km/h  ------- Lap: %d  ------- Time: %d seconds -------  Last lap: %d seconds ------- Best lap: %d seconds", vehicle->GetKmh(), lap_num, App->scene_intro->timer.Read() / 1000, App->scene_intro->lastlap, best_lap);
 	App->window->SetTitle(title);
 
+	if (win)
+	{
+		vehicle->ApplyEngineForce(0);
+		vehicle->Turn(0);
+		vehicle->Brake(0);
+		vehicle->body->setLinearVelocity(btVector3(0, 0, 0));
+		sprintf_s(title, "FINISH!!! Press J to play again  ------- Lap: %d  ------- Time: %d seconds -------  Last lap: %d seconds ------- Best lap: %d seconds",
+			lap_num, App->scene_intro->timer.Read() / 1000, App->scene_intro->lastlap, best_lap);
+
+		App->window->SetTitle(title);
+	}
+	
 	return UPDATE_CONTINUE;
 }
 
